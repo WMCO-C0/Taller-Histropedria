@@ -1,2 +1,1 @@
-# Taller-Histropedria
-Taller de Histropedia framework para hacer visualización de Datos en linea de de tiempo con consulta en SPARQL Dominio Publico 
+En el marco de Wikidata y Dominio Público, es una serie de capacitaciónes en línea dirigida a personal y voluntarios de afiliados Wikimedia de Latinoamérica que trabajan en temas GLAM, desde el capitulo de Wikimedia Colombia nos sumamos al plan de actividades con un taller de [Histropedia](https://js.histropedia.com/)
