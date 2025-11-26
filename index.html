@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Taller Histropedia + Wikidata</title>
+  <title>Taller HistropediaJS</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -61,6 +61,7 @@
       border: 1px solid rgba(94, 168, 255, 0.25);
       font-size: 13px;
     }
+    .pill.alt { background: rgba(61, 217, 180, 0.16); border-color: rgba(61, 217, 180, 0.4); }
     .hero {
       text-align: center;
       padding: 12px 0 24px;
@@ -75,6 +76,17 @@
       color: var(--muted);
       font-size: 16px;
       line-height: 1.5;
+    }
+    .note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      background: rgba(231, 236, 244, 0.06);
+      border: 1px solid rgba(231, 236, 244, 0.08);
+      color: var(--muted);
+      font-size: 13px;
     }
     .cards {
       display: grid;
@@ -149,6 +161,20 @@
     }
     .step-content h4 { margin: 0 0 4px; font-size: 15px; }
     .step-content p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    pre {
+      background: rgba(17, 26, 51, 0.85);
+      border: 1px solid rgba(231, 236, 244, 0.08);
+      border-radius: 12px;
+      padding: 12px;
+      overflow: auto;
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.4;
+      margin: 6px 0 0;
+    }
+    code { font-family: "SFMono-Regular", Consolas, monospace; }
+    ul { padding-left: 18px; margin: 8px 0 0; color: var(--muted); }
+    li { margin: 4px 0; }
     @media (max-width: 700px) {
       .navbar { flex-direction: column; align-items: flex-start; gap: 10px; }
       .nav-links { flex-wrap: wrap; }
@@ -160,113 +186,239 @@
     <nav class="navbar">
       <div class="brand">Histropedia · Wikidata</div>
       <div class="nav-links">
-        <a href="#agenda">Momentos</a>
-        <a href="#demos">Demos</a>
+        <a href="#objetivo">Objetivo</a>
+        <a href="#estructura">Estructura</a>
+        <a href="#codigo">Código</a>
+        <a href="#estilos">Estilos</a>
         <a href="#tips">Tips</a>
         <span class="pill">Taller 1 hora</span>
       </div>
     </nav>
 
     <header class="hero">
-      <div class="pill" style="margin-bottom:10px;">Consulta SPARQL → JSON → HistropediaJS</div>
-      <h1>Repositorio del taller</h1>
-      <p>Entrada rapida a Wikidata y su API SPARQL, mas visualizacion con Histropedia. Aqui tienes los momentos del taller y los index de cada demo.</p>
+      <div class="pill" style="margin-bottom:10px;">Visualización sin SPARQL · JSON listo → HistropediaJS</div>
+      <h1>Guión de 1 hora para cargar y estilizar timelines</h1>
+      <p>Importamos HistropediaJS, entendemos timeline vs. article, y re-skinneamos tarjetas con ejemplos reales: Mujeres UdeA · Arte Colombia · Arte Argentina · Arte Uruguay.</p>
+      <div class="note" style="margin-top:12px;">No es un taller de SPARQL: las consultas ya están listas; usamos el JSON resultante.</div>
     </header>
 
-    <section id="agenda">
+    <section id="objetivo">
       <div class="section-title">
-        <h2>Momentos del taller (1h)</h2>
-        <span class="pill" style="background:rgba(94,168,255,0.14);border-color:rgba(94,168,255,0.3);">Hands-on</span>
+        <h2>Objetivo del taller</h2>
+        <span class="pill alt">Hands-on</span>
       </div>
       <div class="steps">
         <div class="step">
-          <div class="step-num">1</div>
+          <div class="step-num">→</div>
           <div class="step-content">
-            <h4>5 min · Contexto rapido</h4>
-            <p>Que es Wikidata, que es SPARQL, y como Histropedia usa JSON para pintar lineas de tiempo.</p>
+            <h4>Usar HistropediaJS rápido</h4>
+            <p>Importar la librería, crear un objeto timeline y pasarle datos ya preprocesados (JSON) sin tocar SPARQL.</p>
           </div>
         </div>
         <div class="step">
-          <div class="step-num">2</div>
+          <div class="step-num">→</div>
           <div class="step-content">
-            <h4>10 min · Leer una query</h4>
-            <p>Explorar la query, endpoint, y las columnas clave: ID, etiqueta, fechas, imagen y orden.</p>
+            <h4>Entender la anatomía</h4>
+            <p>Timeline = contenedor; articles = eventos con título, fecha e imagen; estilos = artículo, eje, zoom.</p>
           </div>
         </div>
         <div class="step">
-          <div class="step-num">3</div>
+          <div class="step-num">→</div>
           <div class="step-content">
-            <h4>15 min · Editar y probar</h4>
-            <p>Cambiar filtros (P39, P495, P27), limites y orden. Ver el JSON devuelto y como se mapea a Histropedia.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-content">
-            <h4>20 min · Construir tu linea</h4>
-            <p>Usar una de las demos como base: duplicar el index, ajustar la query y el mapeo para tu tema.</p>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">5</div>
-          <div class="step-content">
-            <h4>10 min · Mostrar y documentar</h4>
-            <p>Compartir hallazgos, capturas y SQL/SPARQL. Ideas para publicar la pagina.</p>
+            <h4>Jugar con el diseño</h4>
+            <p>Comparar tarjetas y ejes en 4 timelines listas, cambiando colores, bordes y sombras en vivo.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="demos">
+    <section id="estructura">
       <div class="section-title">
-        <h2>Demos y datasets</h2>
+        <h2>Estructura sugerida (1h)</h2>
+        <span class="pill" style="background:rgba(94,168,255,0.14);border-color:rgba(94,168,255,0.3);">Ritmo en 5 bloques</span>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>0–10 min · ¿Qué es HistropediaJS?</h4>
+            <p>Arquitectura simple: página HTML → importas Histropedia → creas timeline en un div → pasas articles con fechas → Histropedia pinta tarjetas.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>10–20 min · Primera timeline vacía</h4>
+            <p>Esqueleto HTML y constructor <code>new Histropedia.Timeline(container, options)</code>. Dependencias: jQuery + mousewheel + Histropedia.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>20–35 min · ¿Qué es un “article”?</h4>
+            <p>Article = evento: título, subtítulo, fechas <code>from/to</code>, imagen. Cargar 3 eventos hardcodeados con <code>timeline.load()</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>35–55 min · Decorar tarjetas</h4>
+            <p>Comparar estilos de UdeA, Arte CO, Arte AR y Arte UY. Cambiar color/base/width/sombra en vivo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>55–60 min · Cierre + mini reto</h4>
+            <p>Recap de imports, timeline, articles y estilos. Reto: clonar una demo, cambiar paleta y 2–3 propiedades sin tocar SPARQL.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="codigo">
+      <div class="section-title">
+        <h2>Cargar HistropediaJS y primera timeline</h2>
+        <span class="pill alt">Bloques 1–3</span>
       </div>
       <div class="cards">
         <div class="card">
-          <h3>Presidentes de Colombia</h3>
-          <p>Linea de tiempo de presidentes, con fechas de mandato, imagen y titulo.</p>
-          <div class="tags">
-            <span class="tag">P39</span><span class="tag">P580 / P582</span><span class="tag">P18</span>
-          </div>
-          <div class="actions">
-            <a class="btn" href="presidentesColombia/index.html">Abrir demo</a>
-            <a class="btn secondary" href="presidentesColombia/presidentes_Colombia.sql">Ver query</a>
-          </div>
+          <h3>HTML mínimo</h3>
+          <p>Importa dependencias y crea la timeline vacía.</p>
+          <pre><code>&lt;div id="timeline"&gt;&lt;/div&gt;
+
+&lt;script src="https://code.jquery.com/jquery-3.5.1.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.histropedia.com/histropedia-1.2.0.min.js"&gt;&lt;/script&gt;
+
+&lt;script&gt;
+  const container = document.getElementById('timeline');
+  const timeline = new Histropedia.Timeline(container, {
+    width: container.clientWidth,
+    height: 480
+    // zoom/style/article: se ajustan luego
+  });
+&lt;/script&gt;</code></pre>
+          <ul>
+            <li>jQuery + mousewheel = dependencias del canvas de Histropedia.</li>
+            <li>El objeto <code>timeline</code> dibuja sobre el div y queda listo para recibir datos.</li>
+          </ul>
         </div>
 
         <div class="card">
-          <h3>Peliculas en dominio publico</h3>
-          <p>Peliculas con derechos liberados, fechas de estreno y relacion con Colombia.</p>
-          <div class="tags">
-            <span class="tag">P6216</span><span class="tag">P577</span><span class="tag">P495 / P27</span>
-          </div>
-          <div class="actions">
-            <a class="btn" href="peliculasdp/index.html">Abrir demo</a>
-            <a class="btn secondary" href="peliculasdp/pelucilasdomiopublico.sql">Ver query</a>
-          </div>
+          <h3>¿Qué es un article?</h3>
+          <p>Histropedia pinta tarjetas a partir de objetos con título, fecha y opcionalmente imagen.</p>
+          <pre><code>const articles = [
+  {
+    id: 1,
+    title: "Nombre del evento u obra",
+    subtitle: "Texto pequeño",
+    from: { year: 1990, month: 1, day: 1, precision: Histropedia.PRECISION_YEAR },
+    to: null,
+    imageUrl: "https://ejemplo.com/imagen.jpg"
+  }
+];
+
+timeline.load(articles);</code></pre>
+          <ul>
+            <li><code>title</code> y <code>subtitle</code> = texto visible.</li>
+            <li><code>from</code>/<code>to</code> aceptan solo año o fecha completa (<code>PRECISION_YEAR</code> si solo hay año).</li>
+            <li><code>imageUrl</code> recorta la imagen dentro de la tarjeta.</li>
+          </ul>
         </div>
 
         <div class="card">
-          <h3>Obras de arte en museos de Colombia</h3>
-          <p>Obras con autor, tecnica y ubicacion en colecciones colombianas.</p>
-          <div class="tags">
-            <span class="tag">P31=obra</span><span class="tag">P195</span><span class="tag">P170</span>
-          </div>
+          <h3>Mini timeline de 3 eventos</h3>
+          <p>Para mostrar el efecto inmediato antes de hablar de estilos.</p>
+          <pre><code>const demoEvents = [
+  { id: 1, title: "Evento A", subtitle: "Ejemplo", from: { year: 1890, precision: Histropedia.PRECISION_YEAR }, to: null, imageUrl: null },
+  { id: 2, title: "Evento B", subtitle: "Ejemplo", from: { year: 1920, precision: Histropedia.PRECISION_YEAR }, to: null, imageUrl: null },
+  { id: 3, title: "Evento C", subtitle: "Ejemplo", from: { year: 1975, precision: Histropedia.PRECISION_YEAR }, to: null, imageUrl: null }
+];
+
+timeline.load(demoEvents);</code></pre>
+          <ul>
+            <li>Muestra tres tarjetas sin depender de SPARQL ni de imágenes.</li>
+            <li>Luego reemplaza <code>demoEvents</code> por el JSON de la consulta preprocesada.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="estilos">
+      <div class="section-title">
+        <h2>Decoración de tarjetas y eje</h2>
+        <span class="pill alt">Bloque 4</span>
+      </div>
+      <div class="card">
+        <h3>Idea general</h3>
+        <p>En cada HTML hay estilos configurados así:</p>
+        <pre><code>const timeline = new Histropedia.Timeline(container, {
+  // ...
+  article: {
+    defaultStyle: ARTICLE_STYLE,
+    defaultActiveStyle: ACTIVE_STYLE,
+    autoStacking: { /* ... */ }
+  },
+  style: { marker: { /* eje */ }, dateLabel: { /* labels */ } }
+});</code></pre>
+        <ul>
+          <li><code>defaultStyle</code> = tarjeta normal; <code>defaultActiveStyle</code> = tarjeta al hacer click.</li>
+          <li>Con pocos cambios (color, width, borde, sombra, radios) cambias totalmente la personalidad.</li>
+          <li><code>style.marker</code> y <code>style.dateLabel</code> controlan el eje y las marcas de fecha.</li>
+        </ul>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <h3>Mujeres UdeA · perfil biográfico</h3>
+          <p>Tarjetas sobrias para biografías.</p>
+          <ul>
+            <li>Paleta violeta, ancho medio (~190).</li>
+            <li><code>header.height</code> y <code>subheader.height</code> moderados.</li>
+            <li>Subtítulo: campo de trabajo o “Egresada de la UdeA”.</li>
+          </ul>
           <div class="actions">
-            <a class="btn" href="obrasdeartecolombia/index.html">Abrir demo</a>
-            <a class="btn secondary" href="obrasdeartecolombia/obrasdeartecolombia.sql">Ver query</a>
+            <a class="btn" href="mujeresudea/mujeresudea.html">Abrir timeline</a>
+            <a class="btn secondary" href="mujeresudea/mujeresudea.sql">Ver consulta</a>
           </div>
         </div>
-
         <div class="card">
-          <h3>Mujeres UdeA</h3>
-          <p>Linea de figuras femeninas de la Universidad de Antioquia: roles, periodos y logros.</p>
-          <div class="tags">
-            <span class="tag">P69</span><span class="tag">P106</span><span class="tag">Biografias</span>
-          </div>
+          <h3>Arte Colombia · museo/galería</h3>
+          <p>Sensación de colección de museo.</p>
+          <ul>
+            <li>Paleta verde/oscura; subtítulo = museo.</li>
+            <li>Card contenida para ver varias obras a la vez.</li>
+            <li>Pregunta guía: ¿qué otro dato pondrían en el subtítulo? (técnica, artista).</li>
+          </ul>
           <div class="actions">
-            <a class="btn" href="mujeresudea/mujeresudea.html">Abrir demo</a>
-            <a class="btn secondary" href="mujeresudea/mujeresudea.sql">Ver query</a>
+            <a class="btn" href="obrasdeartecolombia/index.html">Abrir timeline</a>
+            <a class="btn secondary" href="obrasdeartecolombia/obrasdeartecolombia.sql">Ver consulta</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Arte Argentina · afiche moderno</h3>
+          <p>Tarjetas que parecen póster.</p>
+          <ul>
+            <li><code>topRadius: 14</code>, borde naranja (<code>width: 2</code>).</li>
+            <li>Sombra intensa (<code>shadow.amount</code> alto) y <code>connectorLine</code> con flecha grande.</li>
+            <li>Haz before/after cambiando borde, sombra y radio.</li>
+          </ul>
+          <div class="actions">
+            <a class="btn" href="obrasargentina/index.html">Abrir timeline</a>
+            <a class="btn secondary" href="obrasargentina/consulta.sql">Ver consulta</a>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Arte Uruguay · nota adhesiva</h3>
+          <p>Truco para “post-it”.</p>
+          <ul>
+            <li><code>subheader.height = 0</code> para ocultarlo.</li>
+            <li><code>header.height</code> grande + <code>baseline: "top"</code> para parecer nota pegada.</li>
+            <li>Fondo amarillo suave (<code>#fef3c7</code>), borde ligero y conector fino.</li>
+          </ul>
+          <div class="actions">
+            <a class="btn" href="obrasuruguay/index.html">Abrir timeline</a>
+            <a class="btn secondary" href="obrasuruguay/consulta.sql">Ver consulta</a>
           </div>
         </div>
       </div>
@@ -274,28 +426,57 @@
 
     <section id="tips">
       <div class="section-title">
-        <h2>Tips de uso durante el taller</h2>
+        <h2>Cómo mostrar los ejemplos sin marear</h2>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step-num">A</div>
           <div class="step-content">
-            <h4>Probar en Wikidata Query Service</h4>
-            <p>Abre el endpoint, pega la query de cada demo, ejecuta y revisa columnas. Exporta a JSON y compara con el mapeo en el JS.</p>
+            <h4>Presenta la arquitectura, no el SPARQL</h4>
+            <p>Cuenta que el JSON ya viene listo de Wikidata. En código, resalta dónde mapeas cada fila a <code>title</code>, <code>subtitle</code>, fechas e imagen.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">B</div>
           <div class="step-content">
-            <h4>Modificar filtros</h4>
-            <p>Juega con P39 (cargo), P27/P495 (pais), P577 (fecha), P18 (imagen) y LIMIT. Observa como cambia la linea de tiempo.</p>
+            <h4>Enfócate en ARTICLE_STYLE y ACTIVE_STYLE</h4>
+            <p>En DevTools o editor, marca solo esos bloques. Cambia color/base/width/sombra, recarga y compara densidad.</p>
           </div>
         </div>
         <div class="step">
           <div class="step-num">C</div>
           <div class="step-content">
-            <h4>Crear una copia rapida</h4>
-            <p>Duplica un index en una carpeta nueva, cambia la query y los campos de mapeo (titulo, subtitulo, fecha from/to, imagen) para tu propio tema.</p>
+            <h4>Muestra el eje al tocar zoom</h4>
+            <p>Toca <code>style.marker</code> y <code>style.dateLabel</code> para que vean cómo reaccionan las marcas de tiempo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="reto">
+      <div class="section-title">
+        <h2>Mini reto creativo (5 min)</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Duplica una timeline</h4>
+            <p>Ejemplo: copia la de Uruguay, cambia la paleta y 2–3 propiedades (<code>width</code>, <code>topRadius</code>, <code>shadow.amount</code>).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>No toques el SPARQL</h4>
+            <p>Solo manipula el estilo y, si quieres, el mapeo de subtítulo para probar otros campos del JSON.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>Comparte el resultado</h4>
+            <p>Muestra antes/después. Si hay tiempo, integren su versión en una web o idea de museo/archivo.</p>
           </div>
         </div>
       </div>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Obras públicas de Uruguay – Wikidata + HistropediaJS</title>
+
+  <!-- Fuente para el diseño -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #020617;
+      --card: #020617;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+      --accent-soft: #4ade80;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(16, 185, 129, 0.18), transparent 45%),
+        radial-gradient(circle at 85% 0%, rgba(34, 197, 94, 0.18), transparent 40%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-x: hidden;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.03em;
+    }
+
+    p.lead {
+      margin: 8px 0 0;
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .hint {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 6px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      padding: 22px;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.75);
+    }
+
+    #timeline {
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: linear-gradient(135deg, #020617 0%, #0b1120 40%, #020617 100%);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div>
+      <h1>Obras públicas de Uruguay · Wikidata → HistropediaJS</h1>
+      <p class="lead">
+        Infraestructura pública de Uruguay (edificios, estadios, monumentos, museos…)
+        con datos abiertos de Wikidata.
+      </p>
+      <p class="hint">
+        Rueda del ratón para hacer zoom · arrastra para navegar · clic en la tarjeta para abrir más info.
+      </p>
+    </div>
+
+    <div class="card">
+      <div id="timeline"></div>
+    </div>
+  </main>
+
+  <!-- ===== Dependencias ===== -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+  <script src="https://cdn.histropedia.com/histropedia-1.2.0.min.js"></script>
+
+  <script>
+    // ============================
+    // 1) Estilos de las tarjetas
+    // ============================
+
+    const URUGUAY_PUBLICWORKS_STYLE = {
+      color: "#020617",
+      width: 260,
+      topRadius: 16,
+      maxImageHeight: 200,
+
+      header: {
+        height: 56,
+        text: {
+          font: "600 14px 'Space Grotesk', sans-serif",
+          color: "#e5e7eb",
+          align: "left",
+          baseline: "middle",
+          margin: 12,
+          lineHeight: 18,
+          numberOfLines: 2
+        }
+      },
+
+      subheader: {
+        height: 110,
+        color: "#020617",
+        text: {
+          font: "400 11px 'Space Grotesk', sans-serif",
+          color: "#cbd5f5",
+          align: "left",
+          baseline: "top",
+          margin: 12,
+          lineHeight: 14,
+          numberOfLines: 5
+        }
+      },
+
+      shadow: {
+        x: 0,
+        y: 9,
+        amount: 22,
+        color: "rgba(0,0,0,0.9)"
+      },
+
+      border: {
+        color: "#22c55e",
+        width: 2
+      },
+
+      connectorLine: {
+        offsetX: 28,
+        offsetY: -24,
+        thickness: 2,
+        arrow: {
+          width: 16,
+          height: 54
+        }
+      }
+    };
+
+    const URUGUAY_PUBLICWORKS_ACTIVE_STYLE = {
+      color: "#022c22",
+      header: {
+        text: {
+          color: "#bbf7d0"
+        }
+      },
+      subheader: {
+        color: "#064e3b",
+        text: {
+          color: "#ecfdf5"
+        }
+      },
+      border: {
+        color: "#4ade80",
+        width: 3
+      },
+      shadow: {
+        x: 0,
+        y: 12,
+        amount: 28,
+        color: "rgba(0,0,0,1)"
+      }
+    };
+
+    // ============================
+    // 2) Inicializar timeline
+    // ============================
+
+    const container = document.getElementById("timeline");
+
+    const timeline = new Histropedia.Timeline(container, {
+      width: container.clientWidth,
+      height: 480,
+      verticalOffset: 40,
+
+      onArticleClick: function (article) {
+        const data = article.data || {};
+        const url = data.websiteUrl || data.wikidataUrl;
+        if (url) window.open(url, "_blank");
+      },
+
+      zoom: {
+        initial: 40,
+        minimum: 0,
+        maximum: 120,
+        wheelStep: 0.1,
+        wheelSpeed: 3
+      },
+
+      style: {
+        mainLine: {
+          visible: true,
+          size: 8
+        },
+        marker: {
+          minor: {
+            height: 12,
+            color: "#94a3b8",
+            futureColor: "#64748b"
+          },
+          major: {
+            height: 30,
+            color: "#22c55e",
+            futureColor: "#bbf7d0"
+          }
+        },
+        dateLabel: {
+          minor: {
+            font: "400 10px 'Space Grotesk'",
+            color: "#cbd5f5",
+            textAlign: "start",
+            offset: { x: 4, y: 0 }
+          },
+          major: {
+            font: "600 16px 'Space Grotesk'",
+            color: "#bbf7d0",
+            textAlign: "start",
+            offset: { x: 4, y: 0 }
+          }
+        }
+      },
+
+      article: {
+        density: Histropedia.DENSITY_ALL,
+        draggable: true,
+        distanceToMainLine: 380,
+        autoStacking: {
+          active: true,
+          rowSpacing: 70,
+          range: Histropedia.RANGE_ALL,
+          fitToHeight: true,
+          topGap: 10
+        },
+        periodLine: {
+          defaultHide: false
+        },
+        animation: {
+          move: {
+            active: true,
+            duration: 1400,
+            easing: "swing"
+          },
+          fade: {
+            active: true,
+            duration: 1400,
+            easing: "swing"
+          }
+        },
+        defaultStyle: URUGUAY_PUBLICWORKS_STYLE,
+        defaultActiveStyle: URUGUAY_PUBLICWORKS_ACTIVE_STYLE
+      }
+    });
+
+    const syncSize = () => {
+      const w = container.clientWidth;
+      const h = 480;
+      if (typeof timeline.setSize === "function") {
+        timeline.setSize(w, h);
+      } else if (typeof timeline.resize === "function") {
+        timeline.resize(w, h);
+      }
+    };
+    window.addEventListener("resize", syncSize);
+
+    // ============================
+    // 3) Cargar datos desde Wikidata
+    // ============================
+
+    async function loadUruguayPublicWorksTimeline() {
+      const endpointUrl = "https://query.wikidata.org/sparql";
+      const YEAR_PRECISION =
+        Histropedia.PRECISION_YEAR || Histropedia.PRECISION_DAY;
+
+      const sparql = `
+      # Obras públicas y equipamientos relevantes en Uruguay
+      # Tipos: edificio público, estadio, monumento, museo…
+
+      SELECT DISTINCT
+        ?work ?workLabel ?workDescription
+        ?typeLabel ?cityLabel ?date ?image
+        ?heritageLabel ?architectLabel ?operatorLabel ?website
+      WHERE {
+        VALUES ?type {
+          wd:Q294422   # public building
+          wd:Q483110   # stadium
+          wd:Q4989906  # monument
+          wd:Q33506    # museum
+        }
+
+        ?work wdt:P31/wdt:P279* ?type .
+        ?work (wdt:P17|wdt:P131/wdt:P17) wd:Q77 .   # Uruguay
+
+        # Fechas: preferimos fecha de creación (P571),
+        # si no, fecha de apertura oficial (P1619)
+        OPTIONAL { ?work wdt:P571  ?inception . }
+        OPTIONAL { ?work wdt:P1619 ?opening   . }
+        BIND(COALESCE(?inception, ?opening) AS ?date)
+        FILTER(BOUND(?date))
+
+        OPTIONAL { ?work wdt:P131  ?city . }
+        OPTIONAL { ?work wdt:P18   ?image . }
+        OPTIONAL { ?work wdt:P1435 ?heritage . }
+        OPTIONAL { ?work wdt:P84   ?architect . }
+        OPTIONAL { ?work wdt:P137  ?operator . }
+        OPTIONAL { ?work wdt:P856  ?website . }
+
+        SERVICE wikibase:label {
+          bd:serviceParam wikibase:language "es,en".
+        }
+      }
+      ORDER BY ?date ?workLabel
+      LIMIT 200
+      `;
+
+      const url =
+        endpointUrl +
+        "?query=" +
+        encodeURIComponent(sparql) +
+        "&format=json";
+
+      let data;
+      try {
+        const response = await fetch(url, {
+          headers: { Accept: "application/sparql-results+json" }
+        });
+        data = await response.json();
+      } catch (e) {
+        console.error("Error al consultar Wikidata:", e);
+        return;
+      }
+
+      const bindings = data.results.bindings || [];
+
+      if (!bindings.length) {
+        console.warn("La consulta devolvió 0 resultados");
+      }
+
+      const articles = bindings.map((row, idx) => {
+        // Fecha → año / mes / día
+        const rawDate = row.date.value.split("T")[0]; // YYYY-MM-DD
+        const [yStr, mStr, dStr] = rawDate.split("-");
+        const year = Number(yStr);
+        const month = mStr ? Number(mStr) : 1;
+        const day = dStr ? Number(dStr) : 1;
+
+        const from = {
+          year,
+          month,
+          day,
+          precision: YEAR_PRECISION
+        };
+
+        // Construimos descripción de varias líneas
+        const desc = row.workDescription
+          ? row.workDescription.value
+          : null;
+
+        const metaParts = [];
+
+        if (row.typeLabel) metaParts.push(row.typeLabel.value);
+        if (row.cityLabel) metaParts.push(row.cityLabel.value);
+        if (!isNaN(year)) metaParts.push(String(year));
+        if (row.heritageLabel)
+          metaParts.push("Patrimonio: " + row.heritageLabel.value);
+        if (row.architectLabel)
+          metaParts.push("Arq.: " + row.architectLabel.value);
+        if (row.operatorLabel)
+          metaParts.push("Opera: " + row.operatorLabel.value);
+
+        const lines = [];
+        if (desc) lines.push(desc);
+        if (metaParts.length) lines.push(metaParts.join(" · "));
+
+        const subtitle = lines.join("\n");
+
+        const wikidataUrl = row.work.value;
+        const websiteUrl = row.website ? row.website.value : null;
+
+        return {
+          id: idx + 1,
+          title: row.workLabel.value,
+          subtitle,
+          from,
+          to: null,
+          imageUrl: row.image ? row.image.value : null,
+          wikidataUrl,
+          websiteUrl
+        };
+      });
+
+      timeline.load(articles);
+      syncSize();
+    }
+
+    // Cargar al iniciar
+    loadUruguayPublicWorksTimeline();
+  </script>
+</body>
+</html>
