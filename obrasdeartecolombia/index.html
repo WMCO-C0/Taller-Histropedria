@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Arte colombiano en dominio público – Taller Histropedia + Wikidata</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #022c22;
+      --card: #022c22;
+      --text: #e5e7eb;
+      --accent: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(34, 197, 94, 0.16), transparent 40%),
+        radial-gradient(circle at 80% 0%, rgba(45, 212, 191, 0.16), transparent 35%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-x: hidden;
+    }
+    .shell {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.02em;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.7);
+    }
+    #timeline {
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(15, 118, 110, 0.6);
+      background: linear-gradient(135deg, #022c22, #064e3b);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div>
+      <h1>Taller: Wikidata → SPARQL → HistropediaJS</h1>
+      <p>Línea de tiempo de <strong>pinturas y esculturas en dominio público</strong> de museos colombianos (Museo Nacional y Museo de Antioquia).</p>
+    </div>
+
+    <div class="card">
+      <div id="timeline"></div>
+    </div>
+  </main>
+
+  <!-- Dependencias -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+  <script src="https://cdn.histropedia.com/histropedia-1.2.0.min.js"></script>
+
+  <script>
+    // Estilo "museo": verdes suaves y tarjetas compactas
+    const ARTICLE_STYLE = {
+      color: '#022c22',
+      width: 190,
+      header: {
+        height: 54,
+        text: {
+          font: "600 14px 'Space Grotesk'",
+          color: "#bbf7d0",
+          align: "left",
+          baseline: "middle",
+          margin: 10,
+          lineHeight: 18,
+          numberOfLines: 2
+        }
+      },
+      subheader: {
+        height: 34,
+        color: '#064e3b',
+        text: {
+          font: "400 11px 'Space Grotesk'",
+          color: "#a7f3d0",
+          align: "left",
+          baseline: "middle",
+          margin: 10
+        }
+      },
+      border: {
+        color: '#22c55e',
+        width: 1
+      },
+      shadow: {
+        x: 0,
+        y: 0,
+        amount: 9,
+        color: 'rgba(0,0,0,0.85)'
+      }
+    };
+
+    const ACTIVE_STYLE = {
+      color: '#22c55e',
+      header: {
+        text: {
+          color: '#022c22'
+        }
+      },
+      subheader: {
+        color: '#bbf7d0',
+        text: {
+          color: '#022c22'
+        }
+      },
+      shadow: {
+        x: 3,
+        y: 3,
+        amount: 12,
+        color: 'rgba(0,0,0,0.9)'
+      }
+    };
+
+    const container = document.getElementById('timeline');
+    const timeline = new Histropedia.Timeline(container, {
+      width: container.clientWidth,
+      height: 480,
+      initialZoom: 0.2,
+      style: {
+        marker: {
+          minor: { color: "#16a34a" },
+          major: { color: "#a7f3d0" }
+        },
+        dateLabel: {
+          minor: {
+            font: "400 10px 'Space Grotesk'",
+            color: "#a7f3d0"
+          },
+          major: {
+            font: "600 13px 'Space Grotesk'",
+            color: "#ecfeff"
+          }
+        }
+      },
+      article: {
+        defaultStyle: ARTICLE_STYLE,
+        defaultActiveStyle: ACTIVE_STYLE,
+        autoStacking: {
+          active: true,
+          rowSpacing: 60,
+          fitToHeight: true
+        }
+      }
+    });
+
+    const syncSize = () => {
+      const w = container.clientWidth;
+      const h = 480;
+      if (typeof timeline.setSize === 'function') {
+        timeline.setSize(w, h);
+      } else if (typeof timeline.resize === 'function') {
+        timeline.resize(w, h);
+      }
+    };
+    window.addEventListener('resize', syncSize);
+
+    async function loadColombianArtTimeline() {
+      const endpointUrl = 'https://query.wikidata.org/sparql';
+      const YEAR_PRECISION = Histropedia.PRECISION_YEAR || Histropedia.PRECISION_DAY;
+
+      const sparql = `
+      # Obras en dominio público de museos colombianos
+      SELECT DISTINCT ?work ?workLabel ?inception ?museumLabel ?image WHERE {
+        VALUES ?museum { wd:Q671264 wd:Q2377645 }   # Museo Nacional de Colombia, Museo de Antioquia
+        ?work wdt:P195 ?museum .
+
+        ?work wdt:P31/wdt:P279* ?type .
+        VALUES ?type { wd:Q3305213 wd:Q860861 }     # pintura o escultura
+
+        ?work wdt:P6216 wd:Q19652 .
+
+        OPTIONAL { ?work wdt:P571 ?inception . }
+        OPTIONAL { ?work wdt:P18  ?image . }
+
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
+      }
+      ORDER BY ?inception ?workLabel
+      LIMIT 200
+      `;
+
+      const url = endpointUrl + '?query=' + encodeURIComponent(sparql) + '&format=json&origin=*';
+
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/sparql-results+json' }
+      });
+      const data = await response.json();
+
+      const articles = data.results.bindings
+        .filter(row => row.inception)
+        .map((row, idx) => {
+          const dateStr = row.inception.value.split('T')[0];
+          const parts = dateStr.split('-').map(Number);
+          const year  = parts[0];
+
+          const from = {
+            year,
+            month: 1,
+            day: 1,
+            precision: YEAR_PRECISION
+          };
+
+          const museo = row.museumLabel ? row.museumLabel.value : 'Museo no indicado';
+
+          return {
+            id: idx + 1,
+            title: row.workLabel.value,
+            subtitle: museo,
+            from,
+            to: null,
+            imageUrl: row.image ? row.image.value : null
+          };
+        });
+
+      timeline.load(articles);
+      syncSize();
+    }
+
+    loadColombianArtTimeline();
+  </script>
+</body>
+</html>

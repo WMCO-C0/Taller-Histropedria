@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller Histropedia + Wikidata</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c1224;
+      --card: #111a33;
+      --muted: #9fb3c8;
+      --text: #e7ecf4;
+      --accent: #3dd9b4;
+      --accent-2: #5ea8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background: radial-gradient(circle at 15% 20%, rgba(61, 217, 180, 0.08), transparent 32%),
+                  radial-gradient(circle at 80% 0%, rgba(94, 168, 255, 0.1), transparent 28%),
+                  radial-gradient(circle at 20% 80%, rgba(61, 217, 180, 0.06), transparent 25%),
+                  var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; text-decoration: none; }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      margin: 0 -20px 18px;
+      background: rgba(12, 18, 36, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(231, 236, 244, 0.08);
+    }
+    .brand { font-weight: 700; letter-spacing: 0.02em; }
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 14px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(94, 168, 255, 0.12);
+      color: var(--text);
+      border: 1px solid rgba(94, 168, 255, 0.25);
+      font-size: 13px;
+    }
+    .hero {
+      text-align: center;
+      padding: 12px 0 24px;
+    }
+    .hero h1 {
+      margin: 8px 0 10px;
+      font-size: clamp(28px, 4vw, 40px);
+      letter-spacing: 0.01em;
+    }
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .cards {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      margin: 18px 0 36px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(231, 236, 244, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .card h3 { margin: 0; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .tag {
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(61, 217, 180, 0.12);
+      color: var(--text);
+      font-size: 12px;
+      border: 1px solid rgba(61, 217, 180, 0.4);
+    }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+    .btn {
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(231, 236, 244, 0.12);
+      background: linear-gradient(120deg, rgba(61, 217, 180, 0.16), rgba(94, 168, 255, 0.16));
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+      transition: transform 120ms ease, border-color 120ms ease;
+    }
+    .btn.secondary {
+      background: rgba(231, 236, 244, 0.05);
+      border-color: rgba(231, 236, 244, 0.12);
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(231, 236, 244, 0.25); }
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 32px 0 12px;
+    }
+    .section-title h2 { margin: 0; font-size: 20px; letter-spacing: 0.01em; }
+    .steps { display: grid; gap: 10px; }
+    .step {
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(17, 26, 51, 0.75);
+      border: 1px solid rgba(231, 236, 244, 0.06);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .step-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(61, 217, 180, 0.15);
+      border: 1px solid rgba(61, 217, 180, 0.4);
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .step-content h4 { margin: 0 0 4px; font-size: 15px; }
+    .step-content p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    @media (max-width: 700px) {
+      .navbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .nav-links { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="navbar">
+      <div class="brand">Histropedia · Wikidata</div>
+      <div class="nav-links">
+        <a href="#agenda">Momentos</a>
+        <a href="#demos">Demos</a>
+        <a href="#tips">Tips</a>
+        <span class="pill">Taller 1 hora</span>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="pill" style="margin-bottom:10px;">Consulta SPARQL → JSON → HistropediaJS</div>
+      <h1>Repositorio del taller</h1>
+      <p>Entrada rapida a Wikidata y su API SPARQL, mas visualizacion con Histropedia. Aqui tienes los momentos del taller y los index de cada demo.</p>
+    </header>
+
+    <section id="agenda">
+      <div class="section-title">
+        <h2>Momentos del taller (1h)</h2>
+        <span class="pill" style="background:rgba(94,168,255,0.14);border-color:rgba(94,168,255,0.3);">Hands-on</span>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>5 min · Contexto rapido</h4>
+            <p>Que es Wikidata, que es SPARQL, y como Histropedia usa JSON para pintar lineas de tiempo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>10 min · Leer una query</h4>
+            <p>Explorar la query, endpoint, y las columnas clave: ID, etiqueta, fechas, imagen y orden.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h4>15 min · Editar y probar</h4>
+            <p>Cambiar filtros (P39, P495, P27), limites y orden. Ver el JSON devuelto y como se mapea a Histropedia.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h4>20 min · Construir tu linea</h4>
+            <p>Usar una de las demos como base: duplicar el index, ajustar la query y el mapeo para tu tema.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <h4>10 min · Mostrar y documentar</h4>
+            <p>Compartir hallazgos, capturas y SQL/SPARQL. Ideas para publicar la pagina.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demos">
+      <div class="section-title">
+        <h2>Demos y datasets</h2>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <h3>Presidentes de Colombia</h3>
+          <p>Linea de tiempo de presidentes, con fechas de mandato, imagen y titulo.</p>
+          <div class="tags">
+            <span class="tag">P39</span><span class="tag">P580 / P582</span><span class="tag">P18</span>
+          </div>
+          <div class="actions">
+            <a class="btn" href="presidentesColombia/index.html">Abrir demo</a>
+            <a class="btn secondary" href="presidentesColombia/presidentes_Colombia.sql">Ver query</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Peliculas en dominio publico</h3>
+          <p>Peliculas con derechos liberados, fechas de estreno y relacion con Colombia.</p>
+          <div class="tags">
+            <span class="tag">P6216</span><span class="tag">P577</span><span class="tag">P495 / P27</span>
+          </div>
+          <div class="actions">
+            <a class="btn" href="peliculasdp/index.html">Abrir demo</a>
+            <a class="btn secondary" href="peliculasdp/pelucilasdomiopublico.sql">Ver query</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Obras de arte en museos de Colombia</h3>
+          <p>Obras con autor, tecnica y ubicacion en colecciones colombianas.</p>
+          <div class="tags">
+            <span class="tag">P31=obra</span><span class="tag">P195</span><span class="tag">P170</span>
+          </div>
+          <div class="actions">
+            <a class="btn" href="obrasdeartecolombia/index.html">Abrir demo</a>
+            <a class="btn secondary" href="obrasdeartecolombia/obrasdeartecolombia.sql">Ver query</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Mujeres UdeA</h3>
+          <p>Linea de figuras femeninas de la Universidad de Antioquia: roles, periodos y logros.</p>
+          <div class="tags">
+            <span class="tag">P69</span><span class="tag">P106</span><span class="tag">Biografias</span>
+          </div>
+          <div class="actions">
+            <a class="btn" href="mujeresudea/mujeresudea.html">Abrir demo</a>
+            <a class="btn secondary" href="mujeresudea/mujeresudea.sql">Ver query</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tips">
+      <div class="section-title">
+        <h2>Tips de uso durante el taller</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">A</div>
+          <div class="step-content">
+            <h4>Probar en Wikidata Query Service</h4>
+            <p>Abre el endpoint, pega la query de cada demo, ejecuta y revisa columnas. Exporta a JSON y compara con el mapeo en el JS.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">B</div>
+          <div class="step-content">
+            <h4>Modificar filtros</h4>
+            <p>Juega con P39 (cargo), P27/P495 (pais), P577 (fecha), P18 (imagen) y LIMIT. Observa como cambia la linea de tiempo.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">C</div>
+          <div class="step-content">
+            <h4>Crear una copia rapida</h4>
+            <p>Duplica un index en una carpeta nueva, cambia la query y los campos de mapeo (titulo, subtitulo, fecha from/to, imagen) para tu propio tema.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

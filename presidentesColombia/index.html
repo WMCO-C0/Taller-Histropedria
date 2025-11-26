@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Taller Histropedia + Wikidata</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Helvetica Neue", sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.08), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.08), transparent 30%),
+                  var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-x: hidden;
+    }
+    .shell {
+      width: min(1100px, 100%);
+      display: grid;
+      gap: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.02em;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(226, 232, 240, 0.08);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    #timeline {
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(226, 232, 240, 0.12);
+      background: #0b1220;
+    }
+    .guide h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: var(--accent);
+    }
+    .guide ol {
+      text-align: left;
+      padding-left: 18px;
+      margin: 12px 0 0;
+      line-height: 1.5;
+    }
+    .guide strong { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div>
+      <h1>Taller: Wikidata → SPARQL → HistropediaJS</h1>
+      <p>Ejemplo centrado: presidencias de Colombia en una linea de tiempo dinamica con datos publicos.</p>
+    </div>
+
+    <div class="card">
+      <div id="timeline"></div>
+    </div>
+
+    <section class="card guide">
+      <h2>Guia de 1 hora (uso practico)</h2>
+      <ol>
+        <li><strong>5 min</strong> - Presentacion rapida de Wikidata, SPARQL y HistropediaJS.</li>
+        <li><strong>10 min</strong> - Leer el ejemplo: endpoint, query y formato JSON devuelto.</li>
+        <li><strong>15 min</strong> - Modificar la query: cambiar cargo (P39) o pais; agregar imagen (P18) y fechas (P580/P582).</li>
+        <li><strong>15 min</strong> - Crear su propia linea: elegir tema (artistas, cientificos, eventos historicos), ajustar LIMIT y ORDER BY.</li>
+        <li><strong>10 min</strong> - Mejorar visual: titulos, subtitulos, imagenes, precision de fechas.</li>
+        <li><strong>5 min</strong> - Compartir hallazgos y dudas; ideas para publicar o documentar.</li>
+      </ol>
+    </section>
+  </main>
+
+  <!-- Dependencias: jQuery, jQuery Mousewheel, HistropediaJS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.13/jquery.mousewheel.min.js"></script>
+  <script src="https://cdn.histropedia.com/histropedia-1.2.0.min.js"></script>
+
+  <script>
+    // Inicializar timeline
+    const container = document.getElementById('timeline');
+    const timeline = new Histropedia.Timeline(container, {
+      // Se ajusta al ancho real del contenedor para evitar scroll horizontal.
+      width: container.clientWidth,
+      height: 480
+    });
+    const syncSize = () => {
+      const w = container.clientWidth;
+      const h = 480;
+      if (typeof timeline.setSize === 'function') {
+        timeline.setSize(w, h);
+      } else if (typeof timeline.resize === 'function') {
+        timeline.resize(w, h);
+      }
+    };
+    window.addEventListener('resize', syncSize);
+
+    async function loadPresidentsTimeline() {
+      const endpointUrl = 'https://query.wikidata.org/sparql';
+
+      const sparql = `
+      # Query SPARQL: busca personas (P31=Q5) con el cargo P39 igual a Presidente de Colombia (Q853475).
+      # P580 / P582: fecha de inicio y fin del mandato. P18: imagen. El servicio de etiquetas retorna nombres en es/en.
+      SELECT DISTINCT ?person ?personLabel ?start ?end ?image WHERE {
+        ?person wdt:P31 wd:Q5 .
+        ?person p:P39 ?statement .
+        ?statement ps:P39 wd:Q853475 .
+        OPTIONAL { ?statement pq:P580 ?start }
+        OPTIONAL { ?statement pq:P582 ?end }
+        OPTIONAL { ?person wdt:P18 ?image }
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
+      }
+      ORDER BY ?start
+      LIMIT 50
+      `;
+
+      const url = endpointUrl + '?query=' + encodeURIComponent(sparql);
+
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/sparql-results+json' }
+      });
+      const data = await response.json();
+
+      const articles = data.results.bindings
+        // Cada fila del JSON -> articulo en Histropedia; se arma rango de fechas y textos.
+        .filter(row => row.start)
+        .map((row, idx) => {
+          const [sy, sm, sd] = row.start.value.split('-').map(Number);
+          const from = {
+            year: sy,
+            month: sm,
+            day: sd,
+            precision: Histropedia.PRECISION_DAY
+          };
+
+          let to = null;
+          if (row.end) {
+            const [ey, em, ed] = row.end.value.split('-').map(Number);
+            to = {
+              year: ey,
+              month: em,
+              day: ed,
+              precision: Histropedia.PRECISION_DAY
+            };
+          }
+
+          return {
+            id: idx + 1,
+            title: row.personLabel.value,
+            subtitle: 'Presidente de Colombia',
+            from,
+            to,
+            imageUrl: row.image ? row.image.value : null
+          };
+        });
+
+      timeline.load(articles);
+    }
+
+    // Cargar la timeline al iniciar
+    loadPresidentsTimeline();
+  </script>
+</body>
+</html>
